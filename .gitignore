@@ -1,2 +1,2 @@
 #ignore server.o 
-src/server.o
+src/server
