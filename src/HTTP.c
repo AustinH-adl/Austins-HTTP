@@ -23,13 +23,15 @@ enum http_request {
   HTTP_REQUEST__COUNT,
 };
 
+char* processResponse(int id, char* reply);
+
 void *handle_connection(void *vclient_socket) {
 	int client_socket = *((int *)vclient_socket); //cast void ptr to int
 	int client_socket_len = sizeof(client_socket);
     int bytes_sent;
 		
 	char response[1024]; //Creating a buffer for response
-	char* reply = processResponse(client_socket);
+	char* reply = processResponse(client_socket, response);
 	printf("Reply: \n%s\n", reply);
 
 	if(bytes_sent = send(client_socket, reply, strlen(reply), 0) < 0 ) {
@@ -42,9 +44,8 @@ void *handle_connection(void *vclient_socket) {
 	return NULL;
 }
 
-char* processResponse(int id) {
+char* processResponse(int id, char* reply) {
 	char read_buffer[BUFFER_SIZE];
-    char reply[BUFFER_SIZE];
 
 	if(read(id, read_buffer, BUFFER_SIZE) < 0) {
 		printf("Read failed: %s \n", strerror(errno));
@@ -82,7 +83,7 @@ char* processResponse(int id) {
 		path = strtok(NULL, " ");
 		path = strtok(NULL, "\r\n"); //Navigate to the useragent text
 
-		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", strlen(path), path);
+		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %ld\r\n\r\n%s", strlen(path), path);
 		return reply;
 
     /* If the request path is not a previously defined request then return a "404 not found" response*/
@@ -139,7 +140,10 @@ int main() {
         }
         printf("Client connected\n");
         
-
+        pthread_t thread_id; 
+		int *pclient_socket = &client_id;
+		pthread_create(&thread_id, NULL, handle_connection, pclient_socket);
     }
-
+    pthread_exit(NULL);
+	close(server_fd);
 }
