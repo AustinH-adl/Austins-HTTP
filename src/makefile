@@ -1,4 +1,4 @@
 CC=gcc
 
 server: HTTP.c
-	gcc -o server HTTP.c
+	gcc -lcurl -lz HTTP.c -o server
