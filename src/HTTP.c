@@ -9,7 +9,7 @@
 #include <pthread.h> 
 
 #define BUFFER_SIZE 1024
-#define PORT 4221
+#define PORT 8080
 
 #define REPLY_OK "HTTP/1.1 200 OK\r\n\r\n"
 #define REPLY_NOT_FOUND "HTTP/1.1 404 Not Found\r\n\r\n"
@@ -54,6 +54,7 @@ char* processResponse(int id, char response[]) {
 	} else {
 		return REPLY_NOT_FOUND;
 	}
+	return REPLY_NOT_FOUND;
 }
 
 void *handle_connection(void *vclient_socket) {
@@ -71,7 +72,8 @@ void *handle_connection(void *vclient_socket) {
 		printf("Send failed: %s \n", strerror(errno));
 		return NULL;
 	}
-
+	
+	close(client_socket);
 	printf("Process complete\n");
 	printf("-------------\n");
 	return NULL;
