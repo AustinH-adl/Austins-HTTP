@@ -15,13 +15,13 @@ For manual testing first run the server with `./server` while it is compiled in 
 
 
 ## To-Do
--Serve files
+1. Serve files
 Serving HTTP files so that a website can be accessed properly. 
--Silent mode
+2. Silent mode
 Allowing the program to be run in silent mode where no logs are output to the terminal.
--Allowing peer to peer communication
+3. Allowing peer to peer communication
 Obtaining POST requests from clients and verifying content then distributing to other clients. 
--Final Chat app
+4. Final Chat app
 
 ## Environment 
 Development was done with VScode 1.91.0 running on WSL ubuntu 22.04 compiling with gcc version 11.4.0.
