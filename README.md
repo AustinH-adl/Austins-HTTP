@@ -16,11 +16,11 @@ For manual testing first run the server with `./server` while it is compiled in 
 
 ## To-Do
 1. Serve files
-Serving HTTP files so that a website can be accessed properly. 
+- Serving HTTP files so that a website can be accessed properly. 
 2. Silent mode
-Allowing the program to be run in silent mode where no logs are output to the terminal.
+- Allowing the program to be run in silent mode where no logs are output to the terminal.
 3. Allowing peer to peer communication
-Obtaining POST requests from clients and verifying content then distributing to other clients. 
+- Obtaining POST requests from clients and verifying content then distributing to other clients. 
 4. Final Chat app
 
 ## Environment 
