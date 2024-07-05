@@ -1,8 +1,10 @@
 # Coding a HTTP server in C
 Programming a basic HTTP server in C. Making use of cURL for testing purposes and sending requests to the server written in a bash script which can and will be modified with any required tests going forward. After cloning the repo to run the code first navigate to /src directory and compile code with the makefile by: 
 
-```cd src 
-make ```
+```
+cd src 
+make
+```
 
 This will compile the as of now one file into server binary which can be ran with `./server`. 
 
