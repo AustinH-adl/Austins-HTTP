@@ -14,7 +14,10 @@ URL="localhost:${PORT}"
 numtest=0
 passed=0
 
-function test_server {
+function test_server() 
+{
+    echo "$1"
+    echo "$2"
     #Get 2 arguements
     local endpoint=$1
     local expected_result=$2
@@ -50,13 +53,22 @@ sleep 4 #Allow time for server to start
 #tests to be executed 
 tests=("/" "OK"
        "/echo/HelloWorld" "HelloWorld"
-
-       "/user-agent" "curl/7.81.0 hello"
-
-       "/not-found" " ")
+       "/user-agent" "curl/7.81.0"
+       "/serverroot/index.html" 
+"<!DOCTYPE html>
+<html>
+    <head>
+        <title>Example</title>
+    </head>
+    <body>
+        <p>This is an example of a simple HTML page with one paragraph.</p>
+    </body>
+</html>"
+        "/notfound" ""
+       )
 
 for (( i=0; i<${#tests[@]} ; i+=2 )) ; do
-    test_server ${tests[i]} ${tests[i+1]}
+    test_server "${tests[i]}" "${tests[i+1]}"
 done
 
 echo "Number of tests passed ${passed}"
