@@ -11,23 +11,15 @@
 #define BUFFER_SIZE 1024
 #define PORT 8080
 
-#define REPLY_OK "HTTP/1.1 200 OK\r\n\r\n"
-#define REPLY_NOT_FOUND "HTTP/1.1 404 Not Found\r\n\r\n"
+#define REPLY_OK "HTTP/1.1 200 OK\r\n\r\nOK"
+#define REPLY_NOT_FOUND "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n404NotFound"
 
-char* processResponse(int id, char response[]) {
-	char buffer[BUFFER_SIZE];
 
-	/*Read the HTTP request and save to buffer*/
-	if(read(id, buffer, BUFFER_SIZE) < 0) {
-		printf("Read failed: %s \n", strerror(errno));
-    	return REPLY_NOT_FOUND;
- 	} else {
-    	printf("Request from client:\n%s\n", buffer);
-  	}
-
-	//Split request to the path
-	char *path = strtok(buffer, " ");
-  	path = strtok(NULL, " ");
+/* Process any HTTP Get requests 
+Todo: Add a function to process Post responses if needed*/
+char* processGet(char response[], char request[BUFFER_SIZE]) {
+	char* path = strtok(request, " ");
+	path = strtok(NULL, " ");
 
 	/*Compare the path to / and send "HTTP ok"*/
 	if (strcmp(path, "/") == 0) {
@@ -36,9 +28,9 @@ char* processResponse(int id, char response[]) {
 	/*Compare the path to "Echo" and send the string following echo*/
 	} else if (strncmp(path, "/echo/", 6) == 0) {
 		char *echo_string = path + 6;
-    	sprintf(response,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %ld\r\n\r\n%s",
-        	strlen(echo_string), echo_string);
+		sprintf(response,
+			"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %ld\r\n\r\n%s",
+			strlen(echo_string), echo_string);
 		return response;
 	
 	/* Compare the path to "/user-agent" and sends the request's user agent header*/
@@ -55,6 +47,24 @@ char* processResponse(int id, char response[]) {
 		return REPLY_NOT_FOUND;
 	}
 	return REPLY_NOT_FOUND;
+}
+
+char* processResponse(int id, char response[]) {
+	char buffer[BUFFER_SIZE];
+	ssize_t bytesread;
+	/*Read the HTTP request and save to buffer*/
+	if (bytesread = read(id, buffer, BUFFER_SIZE) <= 0) {
+		printf("Read failed: %s \n", strerror(errno));
+    	return REPLY_NOT_FOUND;
+ 	} else {
+    	printf("Request from client:\n%s\n", buffer);
+  	}
+
+	if (strncmp(buffer, "GET", 3) == 0 ) {
+		return processGet(response, buffer);
+	} else {
+		return REPLY_NOT_FOUND;
+	}
 }
 
 void *handle_connection(void *vclient_socket) {
@@ -136,6 +146,7 @@ int main() {
 		pthread_t thread_id; 
 		int *pclient_socket = &client_id; //Casting client_id to a ptr so handle_connection can be used
 		pthread_create(&thread_id, NULL, handle_connection, pclient_socket);
+		pthread_detach(thread_id);
 	}
 	//Catch any still running threads and close them then close the server
 	pthread_exit(NULL);

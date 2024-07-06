@@ -12,6 +12,7 @@ PORT="8080"
 URL="localhost:${PORT}"
 
 numtest=0
+passed=0
 
 function test_server {
     #Get 2 arguements
@@ -20,17 +21,17 @@ function test_server {
 
     #Send HTTP request and save respone
     response=$(curl -s $URL$endpoint)
-
+    
     let "numtest += 1"
 
     #If actual response matches expected test passed
-    if ["${response}" -eq "${result}"]; then
+    if [[ $response == $expected_result ]]; then
         echo "Test ${numtest} passed."
+        let "passed+=1"
     #Otherwise test failed
     else
         echo "Test ${numtest} failed. Expected: $expected_result, Got: $response"
     fi
-    unset $response  # Clear the response variable
 }
 
 #Shutdown the server
@@ -47,14 +48,15 @@ trap cleanup EXIT
 sleep 4 #Allow time for server to start
 
 #tests to be executed 
-tests=("/" "200"
-       "/echo/HelloWorld" "200"
-       "/user-agent" "200"
-       "/not-found" "404")
+tests=("/" "OK"
+       "/echo/HelloWorld" "HelloWorld"
+
+       "/user-agent" "curl/7.81.0 hello"
+
+       "/not-found" " ")
 
 for (( i=0; i<${#tests[@]} ; i+=2 )) ; do
     test_server ${tests[i]} ${tests[i+1]}
 done
 
-#Call cleanup function at end of the script
-cleanup
+echo "Number of tests passed ${passed}"
