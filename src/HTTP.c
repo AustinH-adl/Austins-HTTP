@@ -70,6 +70,7 @@ char* processGet(char response[], char request[BUFFER_SIZE]) {
 				FILE* file = fopen(directory, "r");
 
 				if (file) {
+					//Find the size of the file and read the whole file to file_contents then close file
 					fseek(file, 0, SEEK_END);
 					long fsize = ftell(file);
 					rewind(file);
@@ -77,14 +78,17 @@ char* processGet(char response[], char request[BUFFER_SIZE]) {
 					fread(file_contents, fsize, 1, file);
 					fclose(file);
 					
-					
+					//Create a terminating character at end of the string
 					file_contents[fsize] = 0;
 
-					printf("%s", file_contents);
-
-					sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", fsize, file_contents);
-					free(file_contents);
-					return response;
+					if(sizeof(file_contents) < BUFFER_SIZE) {
+						sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", fsize, file_contents);
+						free(file_contents);
+						return response;
+					} else {
+						free(file_contents);
+						return REPLY_NOT_FOUND;
+					}
 				} else {
 					printf("Error reading file");
 				}
