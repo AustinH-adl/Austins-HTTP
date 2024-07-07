@@ -6,28 +6,31 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <pthread.h> 
+#include <pthread.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define BUFFER_SIZE 1024
 #define PORT 8080
 
-#define REPLY_OK "HTTP/1.1 200 OK\r\n\r\n"
-#define REPLY_NOT_FOUND "HTTP/1.1 404 Not Found\r\n\r\n"
+#define REPLY_OK "HTTP/1.1 200 OK\r\n\r\nOK"
+#define REPLY_NOT_FOUND "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n404NotFound"
 
-char* processResponse(int id, char response[]) {
-	char buffer[BUFFER_SIZE];
+char* getMimeType(char* filename) {
+	char* ext = strrchr(filename, '.');
+	if (!ext) {
+		printf("No Extention");
+		return "";
+	} else {
+		return (ext+1);
+	}
+}
 
-	/*Read the HTTP request and save to buffer*/
-	if(read(id, buffer, BUFFER_SIZE) < 0) {
-		printf("Read failed: %s \n", strerror(errno));
-    	return REPLY_NOT_FOUND;
- 	} else {
-    	printf("Request from client:\n%s\n", buffer);
-  	}
-
-	//Split request to the path
-	char *path = strtok(buffer, " ");
-  	path = strtok(NULL, " ");
+/* Process any HTTP Get requests 
+Todo: Add a function to process Post responses if needed*/
+char* processGet(char response[], char request[BUFFER_SIZE]) {
+	char* path = strtok(request, " ");
+	path = strtok(NULL, " ");
 
 	/*Compare the path to / and send "HTTP ok"*/
 	if (strcmp(path, "/") == 0) {
@@ -36,9 +39,9 @@ char* processResponse(int id, char response[]) {
 	/*Compare the path to "Echo" and send the string following echo*/
 	} else if (strncmp(path, "/echo/", 6) == 0) {
 		char *echo_string = path + 6;
-    	sprintf(response,
-            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %ld\r\n\r\n%s",
-        	strlen(echo_string), echo_string);
+		sprintf(response,
+			"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %ld\r\n\r\n%s",
+			strlen(echo_string), echo_string);
 		return response;
 	
 	/* Compare the path to "/user-agent" and sends the request's user agent header*/
@@ -50,11 +53,69 @@ char* processResponse(int id, char response[]) {
 		sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %ld\r\n\r\n%s", strlen(path), path);
 		return response;
 
-	/*If none of the defined methods occur then send a not found*/
+	/* If none of the previously defined methods are excecuted query the path as a filepath*/
+	} else if(strncmp(path, "/", 1)==0) {
+
+		char absolutepath[BUFFER_SIZE];
+		getcwd(absolutepath, BUFFER_SIZE * sizeof(char));
+		char* directory = strcat(absolutepath, path);
+
+		if(access(directory, F_OK)!=0) { //If file does not exist return 404 not found
+			return REPLY_NOT_FOUND;
+
+		} else { //If file exists read contents of file and serve as response
+
+			/*Check if the file type is supported currently*/
+			if (strcmp(getMimeType(path), "html")==0) {
+				FILE* file = fopen(directory, "r");
+
+				if (file) {
+					//Find the size of the file and read the whole file to file_contents then close file
+					fseek(file, 0, SEEK_END);
+					long fsize = ftell(file);
+					rewind(file);
+					char *file_contents = malloc(fsize + 1);
+					fread(file_contents, fsize, 1, file);
+					fclose(file);
+					
+					//Create a terminating character at end of the string
+					file_contents[fsize] = 0;
+
+					if(sizeof(file_contents) < BUFFER_SIZE) {
+						sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", fsize, file_contents);
+						free(file_contents);
+						return response;
+					} else {
+						free(file_contents);
+						return REPLY_NOT_FOUND;
+					}
+				} else {
+					printf("Error reading file");
+				}
+			} else {
+				printf("Unsupported filetype");
+			}
+		}
+	}
+	return REPLY_NOT_FOUND;
+}
+
+char* processResponse(int id, char response[]) {
+	char buffer[BUFFER_SIZE];
+	ssize_t bytesread;
+	/*Read the HTTP request and save to buffer*/
+	if (bytesread = read(id, buffer, BUFFER_SIZE) <= 0) {
+		printf("Read failed: %s \n", strerror(errno));
+    	return REPLY_NOT_FOUND;
+ 	} else {
+    	printf("Request from client:\n%s\n", buffer);
+  	}
+
+	if (strncmp(buffer, "GET", 3) == 0 ) {
+		return processGet(response, buffer);
 	} else {
 		return REPLY_NOT_FOUND;
 	}
-	return REPLY_NOT_FOUND;
 }
 
 void *handle_connection(void *vclient_socket) {
@@ -136,6 +197,7 @@ int main() {
 		pthread_t thread_id; 
 		int *pclient_socket = &client_id; //Casting client_id to a ptr so handle_connection can be used
 		pthread_create(&thread_id, NULL, handle_connection, pclient_socket);
+		pthread_detach(thread_id);
 	}
 	//Catch any still running threads and close them then close the server
 	pthread_exit(NULL);

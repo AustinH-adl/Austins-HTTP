@@ -9,14 +9,15 @@ make
 This will compile the as of now one file into server binary which can be ran with `./server`. 
 
 ## Testing
-Testing was conducted with the `server_test.sh` file which can be ran by calling ```./server_test.sh``` in the parent directory `'HTTP server'`. This should run the tests and compare the HTTP response obtained to the expected result and output the ammount of tests passed as well as the server logs.
+Testing was conducted with the bash script `server_test.sh` which can be run by calling `./server_test.sh` in the parent directory: `'HTTP server'`. This should run the tests and compare the HTTP response obtained to the expected result and output the ammount of tests passed as well as the server logs. Tests can be added directly to the script in the `tests` array by adding a filepath to be tested then an expected response both as strings.
 
 For manual testing first run the server with `./server` while it is compiled in the `/src` directory. Then send any HTTP request to the selected port defined in `HTTP.c`. 
 
 
 ## To-Do
-1. Serve files
-- Serving HTTP files so that a website can be accessed properly. 
+1. Serve CSS/JS files 
+- Serving files so that a website can be accessed properly. 
+- Also adding support for photos and other binary files. 
 2. Silent mode
 - Allowing the program to be run in silent mode where no logs are output to the terminal.
 3. Allowing peer to peer communication
